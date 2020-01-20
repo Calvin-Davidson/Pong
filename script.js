@@ -2,10 +2,7 @@ const canvas = document.querySelector('canvas');
 
 let context = canvas.getContext('2d');
 
-let disco = false;
-let onhitcolor = false;
-let onhitsize = false;
-let clearOnUpdate = true;
+let keymovement = true;
 
 let mijnPunten = 0;
 let tegenPunten = 0;
@@ -16,16 +13,14 @@ canvas.height = window.innerHeight;
 let width = canvas.width;
 let height = canvas.height;
 
-balls = [];
-
-for(let i = 0; i < 1 ;i++){
   let ballObject = {};
   ballObject.x = Math.floor(Math.random() * width) + 20; 
   ballObject.y = Math.floor(Math.random() * height) + 20; 
   ballObject.radius = Math.floor(Math.random() * 20) + 20;
   ballObject.color = '#FF6633';
-  ballObject.velX = 3;
-  ballObject.velY = 3;
+  ballObject.velX = 0.1;
+  ballObject.velY = 0.1;
+  ballObject.speed = 30;
 
   ballObject.draw = function(){
     context.beginPath();
@@ -39,13 +34,6 @@ for(let i = 0; i < 1 ;i++){
 
   ballObject.update = function() {
 
-    // als je mij raakt.
-
-    if ((ballObject.x - ballObject.radius) >= parseInt(player.x) && (ballObject.x - ballObject.radius) <= parseInt(player.x) + 25) {
-    if ((ballObject.y - ballObject.radius) >= parseInt(player.y) && ((ballObject.y - ballObject.radius) <= parseInt(player.y) + 100)) {
-      ballObject.velX = -ballObject.velX;
-      }
-    }
     // && (ballObject.x - ballObject.radius) >= parseInt(player.y) + 100)
 
     if ((ballObject.x - ballObject.radius) <= 0) {
@@ -54,8 +42,6 @@ for(let i = 0; i < 1 ;i++){
       tegenPunten++;
       ballObject.x = width/2;
       ballObject.y = height/2;
-      ballObject.velX = 3;
-      ballObject.velY = 3;
     }
 
     
@@ -65,8 +51,6 @@ for(let i = 0; i < 1 ;i++){
       mijnPunten++;
       ballObject.x = width/2;
       ballObject.y = height/2;
-      ballObject.velX = 3;
-      ballObject.velY = -3;
     }
 
     if ((ballObject.y - ballObject.radius) <= 0 || (ballObject.y + ballObject.radius) >= height) {
@@ -74,20 +58,16 @@ for(let i = 0; i < 1 ;i++){
     }
 
     // De echte movement ( nog niet het tekenen )
-    ballObject.x += ballObject.velX;
-    ballObject.y += ballObject.velY;
+    for (let i = 0; i < ballObject.speed; i++) {
+      ballCollisionCheck();
+      ballObject.x += ballObject.velX;
+    }
+
+    for (let i = 0; i < ballObject.speed; i++) {
+      ballCollisionCheck();
+      ballObject.y += ballObject.velY;
+    }
   }
-
-
-  balls.push(ballObject);
-}
-
-  updateScore = function() {
-    context.font = "100px Arial";
-    context.fillText(mijnPunten + "  -  " + tegenPunten, width/2 - 100, height/2);
-  }
-
-
 
   let player = {};
   player.x = 20; 
@@ -127,22 +107,53 @@ for(let i = 0; i < 1 ;i++){
   
 
   tegenstander.update = function() {
-    console.log("UPDATEING")
 
-    if (balls[0].y < tegenstander.y) {
+    if (tegenstander.y - 5 >= 0) {
+    if (ballObject.y < tegenstander.y) {
         // de bal zit hoger
-        tegenstander--;
+        tegenstander.y -= 5;
     }
-    if (balls[0].y > tegenstander.y) {
-      tegenstander++;
+  }
+
+    if (tegenstander.y + 95 <= height) {
+    if (ballObject.y > tegenstander.y) {
+      tegenstander.y += 5;
       // de bal zit lager
   }
+}
   }
 
+
+  updateScore = function() {
+    context.font = "100px Arial";
+    context.fillText(mijnPunten + "  -  " + tegenPunten, width/2 - 100, height/2);
+  }
+
+
+
+  ballCollisionCheck = function() {
+
+
+    if ((ballObject.x - ballObject.radius) >= parseInt(player.x) && (ballObject.x - ballObject.radius) <= parseInt(player.x) + 25) {
+      if ((ballObject.y - ballObject.radius) >= parseInt(player.y) && ((ballObject.y - ballObject.radius) <= parseInt(player.y) + 100)) {
+        ballObject.velX = -ballObject.velX;
+        }
+      }
+        if ((ballObject.x + ballObject.radius) >= parseInt(tegenstander.x) && (ballObject.x + ballObject.radius) <= parseInt(tegenstander.x) + 25) {
+          if ((ballObject.y + ballObject.radius) >= parseInt(tegenstander.y) && ((ballObject.y - ballObject.radius) <= parseInt(tegenstander.y) + 100)) {
+            ballObject.velX = -ballObject.velX;
+            }
+          }
+  }
 
 
 
 document.addEventListener('keydown', function(event) {
+  if (keymovement == true) {
+  
+    console.log(event.keyCode);
+
+
   if(event.keyCode == 38) {
     //up
     if (player.x + 40 <= 0) {
@@ -165,28 +176,51 @@ document.addEventListener('keydown', function(event) {
         }
       }
     }
+  }
 });
 
+document.addEventListener('mousemove', function(e){
+  if (keymovement == false) {
+  var y = e.pageY;
 
+  player.y = y;
+  }
+  });
 
 animate = function() {
   // Cleard het scherm en laat hem update
-  if (clearOnUpdate == true) {
     context.fillStyle = 'rgba(0, 0, 0)';
     context.fillRect(0, 0, width, height);
-  }
+  
 
-  for (let i = 0; i < balls.length; i++) {
-   balls[i].update();
-   balls[i].draw();
+   ballObject.update();
+   ballObject.draw();
 
    player.draw();
    updateScore();
   
    tegenstander.update();
-   //tegenstander.draw();
+   tegenstander.draw();
 
-  }
+
   requestAnimationFrame(animate);
 }
 animate();
+
+
+
+
+
+
+
+
+document.addEventListener('keydown', function(event) {
+  // settings changer
+  if(event.keyCode == 49) {
+    if (keymovement == true) {
+      keymovement = false;
+    } else {
+      keymovement = true;
+    }
+  }
+});
